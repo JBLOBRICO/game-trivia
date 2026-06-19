@@ -5,7 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
-import { initDB } from './models/db';
+import { getDatabase } from '../db/database';
 import authRouter from './routes/auth';
 import roomsRouter from './routes/rooms';
 import triviaRouter from './routes/trivia';
@@ -29,7 +29,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize DB (creates tables if missing)
-initDB();
+getDatabase().then(() => console.log('✅ Database initialized')).catch(console.error);
 
 // API routes
 app.use('/api/auth', authRouter);

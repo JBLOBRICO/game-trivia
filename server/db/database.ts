@@ -65,6 +65,29 @@ export async function getDatabase(): Promise<Database> {
       FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
       UNIQUE(user_id, type)
     );
+
+    CREATE TABLE IF NOT EXISTS rooms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE NOT NULL,
+      mode TEXT NOT NULL,
+      host_user_id INTEGER,
+      status TEXT DEFAULT 'lobby',
+      board_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS room_players (
+      room_id INTEGER,
+      user_id INTEGER,
+      avatar TEXT,
+      character TEXT,
+      position INTEGER DEFAULT 0,
+      shield INTEGER DEFAULT 0,
+      double_move INTEGER DEFAULT 0,
+      trap_protect INTEGER DEFAULT 0,
+      ready INTEGER DEFAULT 0,
+      PRIMARY KEY (room_id, user_id)
+    );
   `);
 
   return db;

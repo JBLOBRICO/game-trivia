@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../models/db';
+import { getDatabase } from '../../db/database';
 import { authMiddleware } from './auth';
 
 const router = Router();
@@ -20,25 +20,6 @@ interface PlayerRow {
   ready: number;
 }
 
-// Helper to promisify db.get
-function dbGet<T>(sql: string, params: any[] = []): Promise<T | undefined> {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row as T);
-    });
-  });
-}
-// Helper to promisify db.run
-function dbRun(sql: string, params: any[] = []): Promise<{ lastID: number }> {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (this: any, err: Error | null) {
-      if (err) reject(err);
-      else resolve({ lastID: this ? this.lastID : 0 });
-    });
-  });
-}
-
 // Generate a unique 6‑char room code
 async function generateRoomCode(): Promise<string> {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -47,9 +28,10 @@ async function generateRoomCode(): Promise<string> {
     for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
     return code;
   };
+  const db = await getDatabase();
   while (true) {
     const code = makeCode();
-    const existing = await dbGet<RoomRow>('SELECT id FROM rooms WHERE code = ?', [code]);
+    const existing = await db.get<RoomRow>('SELECT id FROM rooms WHERE code = ?', [code]);
     if (!existing) return code;
   }
 }
@@ -61,13 +43,16 @@ router.post('/create', authMiddleware, async (req: Request, res: Response) => {
     const user = (req as any).user;
     if (!gameMode) return res.status(400).json({ error: 'Missing gameMode' });
     const code = await generateRoomCode();
+    
+    const db = await getDatabase();
     // Insert room
-    const { lastID: roomId } = await dbRun(
+    const result = await db.run(
       'INSERT INTO rooms (code, mode, host_user_id, status) VALUES (?,?,?,?)',
       [code, gameMode, user.id, 'lobby']
     );
+    const roomId = result.lastID;
     // Insert host as first player
-    await dbRun(
+    await db.run(
       'INSERT INTO room_players (room_id, user_id, avatar, character, ready) VALUES (?,?,?,?,?)',
       [roomId, user.id, user.avatar, null, 0]
     );
@@ -84,17 +69,19 @@ router.post('/join', authMiddleware, async (req: Request, res: Response) => {
     const { roomCode } = req.body;
     const user = (req as any).user;
     if (!roomCode) return res.status(400).json({ error: 'Missing roomCode' });
-    const room = await dbGet<RoomRow>('SELECT * FROM rooms WHERE code = ?', [roomCode]);
+    
+    const db = await getDatabase();
+    const room = await db.get<RoomRow>('SELECT * FROM rooms WHERE code = ?', [roomCode]);
     if (!room) return res.status(404).json({ error: 'Room not found' });
     if (room.status !== 'lobby') return res.status(400).json({ error: 'Game already started' });
     // Check if already in room
-    const exists = await dbGet<PlayerRow>('SELECT * FROM room_players WHERE room_id = ? AND user_id = ?', [
+    const exists = await db.get<PlayerRow>('SELECT * FROM room_players WHERE room_id = ? AND user_id = ?', [
       room.id,
       user.id,
     ]);
     if (exists) return res.status(400).json({ error: 'Already joined' });
     // Count current players
-    const countRow = await dbGet<{ cnt: number }>('SELECT COUNT(*) as cnt FROM room_players WHERE room_id = ?', [
+    const countRow = await db.get<{ cnt: number }>('SELECT COUNT(*) as cnt FROM room_players WHERE room_id = ?', [
       room.id,
     ]);
     const playerCount = countRow?.cnt ?? 0;
@@ -112,7 +99,7 @@ router.post('/join', authMiddleware, async (req: Request, res: Response) => {
     }
     if (playerCount >= max) return res.status(400).json({ error: 'Room is full' });
     // Add player
-    await dbRun(
+    await db.run(
       'INSERT INTO room_players (room_id, user_id, avatar, character, ready) VALUES (?,?,?,?,?)',
       [room.id, user.id, user.avatar, null, 0]
     );
@@ -128,9 +115,11 @@ router.post('/ready', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { roomCode, ready } = req.body;
     const user = (req as any).user;
-    const room = await dbGet<RoomRow>('SELECT * FROM rooms WHERE code = ?', [roomCode]);
+    
+    const db = await getDatabase();
+    const room = await db.get<RoomRow>('SELECT * FROM rooms WHERE code = ?', [roomCode]);
     if (!room) return res.status(404).json({ error: 'Room not found' });
-    await dbRun('UPDATE room_players SET ready = ? WHERE room_id = ? AND user_id = ?', [
+    await db.run('UPDATE room_players SET ready = ? WHERE room_id = ? AND user_id = ?', [
       ready ? 1 : 0,
       room.id,
       user.id,
