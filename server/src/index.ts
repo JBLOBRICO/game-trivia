@@ -38,12 +38,15 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // Serve static frontend build if exists
-const staticPath = path.resolve(__dirname, '../../client/dist');
-app.use(express.static(staticPath));
-app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(staticPath, 'index.html'));
+// Burahin o i-comment out ito:
+// const staticPath = path.resolve(__dirname, '../../client/dist');
+// app.use(express.static(staticPath));
+// app.get('*', (req: Request, res: Response) => {
+//   res.sendFile(path.join(staticPath, 'index.html'));
+// });
+app.get('/', (req: Request, res: Response) => {
+  res.send('Trivia Game Backend is Online!');
 });
-
 // Socket.IO setup
 registerSocketHandlers(io);
 
