@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { playCorrect, playIncorrect, playCoin, playMove, playTick, playVictory } from '../utils/sound';
-
-const hostname = window.location.hostname;
-export const API_BASE = window.location.port === '5173' || window.location.port === '3000'
-  ? `http://${hostname}:5000`
-  : window.location.origin;
+export const API_BASE = "https://game-trivia.onrender.com";
 
 export const AVATARS = ['🐱', '🐶', '🦊', '🦁', '🐸', '🐨', '🐼', '🦄', '🐉', '🦉'];
 
@@ -45,7 +41,7 @@ export function useGameState() {
   const [view, setView] = useState<'auth' | 'dashboard' | 'lobby' | 'game'>('auth');
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [user, setUser] = useState<any>(null);
-  
+
   // Auth Form
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'guest'>('login');
   const [usernameInput, setUsernameInput] = useState('');
@@ -166,7 +162,7 @@ export function useGameState() {
   const connectSocket = () => {
     if (socket) return socket;
     const s = io(API_BASE);
-    
+
     s.on('connect', () => {
       console.log('Socket connected');
     });
@@ -226,7 +222,7 @@ export function useGameState() {
 
     s.on('game:turn_result', ({ playerUsername, isCorrect, correctAnswer, explanation, movement, coinsEarned, eventTriggeredText, isGameOver, cleanRoomState }) => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      
+
       setRoomState(cleanRoomState);
       setActiveQuestion(null);
       setSubmittedAnswer(null);
@@ -295,7 +291,7 @@ export function useGameState() {
 
     try {
       const endpoint = authMode === 'login' ? 'login' : 'register';
-      const body = authMode === 'login' 
+      const body = authMode === 'login'
         ? { username: usernameInput, password: passwordInput }
         : { username: usernameInput, password: passwordInput, avatar: selectedAvatar };
 
@@ -305,7 +301,7 @@ export function useGameState() {
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      
+
       if (res.ok) {
         localStorage.setItem('token', data.token);
         setToken(data.token);
@@ -443,7 +439,7 @@ export function useGameState() {
     shopError, setShopError,
     chatEndRef,
     timerIntervalRef,
-    
+
     // Actions
     fetchUserProfile,
     logout,
@@ -459,7 +455,7 @@ export function useGameState() {
     handleBuyPowerup,
     handleSubmitAnswer,
     handleLeaveGame,
-    
+
     // Computed
     activePlayer,
     isMyTurn,
