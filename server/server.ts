@@ -48,7 +48,11 @@ app.use('/api/stats', statsRouter);
 
 // Static files (Client/Frontend)
 // Ginagamit ang process.cwd() para laging tama ang root path sa Render
-const clientBuildPath = path.join(process.cwd(), 'client', 'dist');
+// Baguhin ang linyang ito:
+const clientBuildPath = path.join(process.cwd(), '..', 'client', 'dist');
+
+// I-verify kung nasaan talaga ang folder
+console.log('DEBUG: Looking for static files at:', path.resolve(clientBuildPath));
 
 app.use(express.static(clientBuildPath));
 
