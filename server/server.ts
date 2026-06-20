@@ -4,10 +4,9 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
-// To these:
-// Replace your old imports in server.ts with these:
-// server.ts
+// Siguraduhin na ang mga path ay may .js extension para sa NodeNext resolution
 import { getDatabase } from './src/db/database.js';
 import { authRouter } from './src/routes/auth.js';
 import { statsRouter } from './src/routes/stats.js';
@@ -17,6 +16,8 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// Setup Socket.io
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -26,15 +27,21 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 5000;
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
+// API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/stats', statsRouter);
 
-const clientBuildPath = path.join(__dirname, '../client/dist');
+// Static files (Client/Frontend)
+// Ginagamit ang process.cwd() para laging tama ang root path sa Render
+const clientBuildPath = path.join(process.cwd(), 'client', 'dist');
+
 app.use(express.static(clientBuildPath));
 
+// Fallback para sa SPA (Single Page Application)
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
@@ -43,12 +50,14 @@ app.get('*', (req, res) => {
   }
 });
 
+// Bootstrap function
 async function bootstrap() {
   try {
     console.log('Connecting to SQLite Database...');
     await getDatabase();
     console.log('Database connected.');
 
+    // Initialize socket handlers
     registerSocketHandlers(io);
 
     server.listen(PORT, () => {
