@@ -1,3 +1,13 @@
+
+import fs from 'fs';
+console.log('--- DEBUGGING FILE SYSTEM ---');
+console.log('Current working directory:', process.cwd());
+console.log('Files in root:', fs.readdirSync(process.cwd()));
+// Kung may 'client' folder, tignan ang laman:
+if (fs.existsSync('./client')) {
+  console.log('Files in ./client:', fs.readdirSync('./client'));
+}
+console.log('-----------------------------');
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -7,10 +17,11 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
 // Siguraduhin na ang mga path ay may .js extension para sa NodeNext resolution
-import { getDatabase } from './src/db/database.js';
-import { authRouter } from './src/routes/auth.js';
-import { statsRouter } from './src/routes/stats.js';
-import { registerSocketHandlers } from './src/socket/gameHandler.js';
+// server.ts
+import { getDatabase } from './src/db/database.js'; // Magdagdag ng .js
+import { authRouter } from './src/routes/auth.js';   // Magdagdag ng .js
+import { statsRouter } from './src/routes/stats.js';   // Magdagdag ng .js
+import { registerSocketHandlers } from './src/socket/gameHandler.js'; // Magdagdag ng .js
 
 dotenv.config();
 
