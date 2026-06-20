@@ -5,10 +5,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
-import { getDatabase } from '../db/database';
-import { authRouter } from '../routes/auth';
-import { statsRouter } from '../routes/stats';
-import { registerSocketHandlers } from '../socket/gameHandler';
+import { getDatabase } from './db/database';
+import { authRouter } from './routes/auth';
+import { statsRouter } from './routes/stats';
+import { registerSocketHandlers } from './socket/gameHandler';
 
 dotenv.config();
 
