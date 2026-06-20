@@ -6,10 +6,12 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 // To these:
-import { getDatabase } from './db/database.js';
-import { authRouter } from './routes/auth.js';
-import { statsRouter } from './routes/stats.js';
-import { registerSocketHandlers } from './socket/gameHandler.js';
+// Replace your old imports in server.ts with these:
+// server.ts
+import { getDatabase } from './src/db/database.js';
+import { authRouter } from './src/routes/auth.js';
+import { statsRouter } from './src/routes/stats.js';
+import { registerSocketHandlers } from './src/socket/gameHandler.js';
 
 dotenv.config();
 

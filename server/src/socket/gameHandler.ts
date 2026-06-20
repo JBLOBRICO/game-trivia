@@ -76,7 +76,7 @@ function generateBoard(): Tile[] {
   board[8].type = 'wildcard';
   board[12].type = 'trap';
   board[15].type = 'mystery';
-  
+
   // Shortcut: Tile 18 goes to 23 (skips 5 spaces)
   board[18].type = 'shortcut';
   board[18].shortcutDestination = 23;
@@ -145,7 +145,7 @@ export function registerSocketHandlers(io: Server) {
       if (room.status !== 'lobby') {
         return socket.emit('room:error', 'Game already in progress.');
       }
-      
+
       const maxPlayers = room.gameMode === '1v1' ? 2 : 4;
       if (room.players.length >= maxPlayers) {
         return socket.emit('room:error', 'Room is full.');
@@ -210,7 +210,7 @@ export function registerSocketHandlers(io: Server) {
     socket.on('room:start', ({ roomCode }) => {
       const room = rooms[roomCode];
       if (!room) return;
-      
+
       const unready = room.players.find(p => !p.ready);
       if (unready) {
         return socket.emit('room:error', 'All players must be ready.');
@@ -240,7 +240,7 @@ export function registerSocketHandlers(io: Server) {
 
       // Determine the category
       let category = room.board[activePlayer.position].category;
-      
+
       // Override if Wild Card
       if (room.board[activePlayer.position].type === 'wildcard' && chosenCategory) {
         category = chosenCategory;
@@ -251,10 +251,10 @@ export function registerSocketHandlers(io: Server) {
 
       try {
         const db = await getDatabase();
-        
+
         // Fetch a random question that hasn't been used yet in this match
         let question = await db.get(
-          'SELECT * FROM questions WHERE category = ? AND difficulty = ? AND id NOT IN (' + 
+          'SELECT * FROM questions WHERE category = ? AND difficulty = ? AND id NOT IN (' +
           Array.from(room.usedQuestionIds).join(',') + ') ORDER BY RANDOM() LIMIT 1',
           [category, difficulty]
         );
@@ -325,13 +325,13 @@ export function registerSocketHandlers(io: Server) {
         // Scholar active ability: Eliminate 2 wrong choices
         const correct = room.currentQuestion.correct_answer;
         const wrongChoices = room.currentQuestion.choices.filter((c: string) => c !== correct);
-        
+
         // Randomly pick 2 wrong choices to remove
         const removed = wrongChoices.sort(() => 0.5 - Math.random()).slice(0, 2);
-        
+
         room.characterAbilityUsedThisTurn = true;
         room.logs.push(`${player.username} activated "Scientific Method" and eliminated two wrong choices!`);
-        
+
         io.to(roomCode).emit('game:ability_used', {
           ability: 'Scientific Method',
           removedChoices: removed,
@@ -350,7 +350,7 @@ export function registerSocketHandlers(io: Server) {
 
         // Clear existing timer and fetch new question
         if (room.questionTimer) clearInterval(room.questionTimer);
-        
+
         try {
           const db = await getDatabase();
           const category = room.board[player.position].category;
@@ -362,6 +362,7 @@ export function registerSocketHandlers(io: Server) {
           );
 
           if (question) {
+
             room.currentQuestion = {
               id: question.id,
               category: question.category,
@@ -371,7 +372,7 @@ export function registerSocketHandlers(io: Server) {
               correct_answer: question.correct_answer,
               explanation: question.explanation
             };
-            
+
             room.secondsRemaining = 30; // Chronomancer standard + bonus
             io.to(roomCode).emit('game:question', {
               question: {
@@ -384,7 +385,7 @@ export function registerSocketHandlers(io: Server) {
               secondsRemaining: room.secondsRemaining,
               activePlayerUsername: player.username
             });
-            
+
             startQuestionTimer(roomCode, io);
             io.to(roomCode).emit('room:state', getCleanRoomState(roomCode));
           }
@@ -426,7 +427,7 @@ export function registerSocketHandlers(io: Server) {
         const correct = room.currentQuestion.correct_answer;
         const wrongChoices = room.currentQuestion.choices.filter((c: string) => c !== correct);
         const removed = wrongChoices.sort(() => 0.5 - Math.random()).slice(0, 2);
-        
+
         socket.emit('game:powerup_bought', { powerupType, success: true, coins: player.coins });
         socket.emit('game:ability_used', {
           ability: '50/50 Powerup',
@@ -516,7 +517,7 @@ function startQuestionTimer(roomCode: string, io: Server) {
     if (room.secondsRemaining <= 0) {
       clearInterval(room.questionTimer!);
       room.questionTimer = null;
-      
+
       // Process as incorrect (time out)
       room.logs.push(`${room.players[room.turnIndex].username} ran out of time!`);
       processAnswer(roomCode, '__TIMEOUT__', io);
@@ -577,11 +578,11 @@ async function processAnswer(roomCode: string, answer: string, io: Server) {
     }
 
     player.coins += coinsEarned;
-    
+
     // Move player
     const oldPosition = player.position;
     player.position = Math.min(39, player.position + movement);
-    
+
     room.logs.push(`${player.username} answered CORRECTLY! Moved ${movement} space(s) (from ${oldPosition} to ${player.position}) and earned ${coinsEarned} coins.`);
 
     // Trigger Tile events
@@ -604,7 +605,7 @@ async function processAnswer(roomCode: string, answer: string, io: Server) {
     room.status = 'gameover';
     room.winnerUsername = player.username;
     room.logs.push(`🏆 ${player.username} has reached the finish line and won the game!`);
-    
+
     // Save to match history database
     await saveMatchResults(room);
   }
@@ -634,7 +635,7 @@ async function processAnswer(roomCode: string, answer: string, io: Server) {
 
 async function handleTileLanding(room: GameRoom, player: Player, tile: Tile): Promise<{ text: string }> {
   let text = '';
-  
+
   if (tile.type === 'bonus') {
     const bonusSteps = Math.random() < 0.5 ? 1 : 2;
     player.position = Math.min(39, player.position + bonusSteps);
@@ -676,19 +677,22 @@ async function handleTileLanding(room: GameRoom, player: Player, tile: Tile): Pr
   } else if (tile.type === 'mystery') {
     const rolls = [
       { t: 'Windfall', act: () => { player.coins += 20; return `Windfall! Received 20 coins.`; } },
-      { t: 'Tax', act: () => { 
+      {
+        t: 'Tax', act: () => {
           if (player.shield) { player.shield = false; return 'Shield blocked the Mystery Tax!'; }
-          player.coins = Math.max(0, player.coins - 10); 
-          return `Tax! Lost 10 coins.`; 
-        } 
+          player.coins = Math.max(0, player.coins - 10);
+          return `Tax! Lost 10 coins.`;
+        }
       },
-      { t: 'Teleport', act: () => { 
+      {
+        t: 'Teleport', act: () => {
           const move = Math.random() < 0.5 ? 2 : -2;
           player.position = Math.max(0, Math.min(39, player.position + move));
           return `Teleport! Moved ${move > 0 ? 'forward' : 'backward'} ${Math.abs(move)} spaces.`;
-        } 
+        }
       },
-      { t: 'Swap', act: () => {
+      {
+        t: 'Swap', act: () => {
           // Find another player
           const opponents = room.players.filter(p => p.username !== player.username);
           if (opponents.length > 0) {
@@ -725,7 +729,7 @@ function advanceTurn(room: GameRoom) {
   // Turn rotation: Player 0 (T1) -> Player 1 (T2) -> Player 2 (T1) -> Player 3 (T2)
   room.turnIndex = (room.turnIndex + 1) % room.players.length;
   room.characterAbilityUsedThisTurn = false;
-  
+
   const activePlayer = room.players[room.turnIndex];
   room.logs.push(`It is now ${activePlayer.username}'s turn.`);
 }
@@ -733,7 +737,7 @@ function advanceTurn(room: GameRoom) {
 async function saveMatchResults(room: GameRoom) {
   // Standings
   const sorted = [...room.players].sort((a, b) => b.position - a.position);
-  
+
   const winner = sorted[0];
   const matchHistoryData = {
     game_mode: room.gameMode,
@@ -748,7 +752,7 @@ async function saveMatchResults(room: GameRoom) {
 
   try {
     const db = await getDatabase();
-    
+
     // Save to match history (skip for Training mode)
     if (room.gameMode !== 'Training') {
       await db.run(
@@ -762,24 +766,24 @@ async function saveMatchResults(room: GameRoom) {
       for (const p of room.players) {
         if (p.userId) {
           const isWinner = p.username === winner.username;
-        // Simple XP formula: 100 XP base, +50 XP for winning, +10 XP per space moved, +5 XP per coin left
-        const xpEarned = 100 + (isWinner ? 50 : 0) + (p.position * 10) + (p.coins * 2);
-        
-        // Sum correct and incorrect answers
-        // We can estimate from streak or coins
-        const correctCount = p.streak + Math.floor(p.coins / 10);
-        const wrongCount = isWinner ? 1 : 3;
+          // Simple XP formula: 100 XP base, +50 XP for winning, +10 XP per space moved, +5 XP per coin left
+          const xpEarned = 100 + (isWinner ? 50 : 0) + (p.position * 10) + (p.coins * 2);
 
-        await updatePlayerMatchStats(
-          p.userId,
-          isWinner,
-          correctCount,
-          wrongCount,
-          p.coins,
-          xpEarned
-        );
+          // Sum correct and incorrect answers
+          // We can estimate from streak or coins
+          const correctCount = p.streak + Math.floor(p.coins / 10);
+          const wrongCount = isWinner ? 1 : 3;
+
+          await updatePlayerMatchStats(
+            p.userId,
+            isWinner,
+            correctCount,
+            wrongCount,
+            p.coins,
+            xpEarned
+          );
+        }
       }
-    }
     }
   } catch (err) {
     console.error('Error saving match results to DB:', err);
@@ -806,7 +810,7 @@ function handlePlayerExit(socketId: string, io: Server) {
         if (room.status === 'playing' && room.turnIndex >= room.players.length) {
           room.turnIndex = 0;
         }
-        
+
         // If lobby host left and there are players left, they get notified
         io.to(code).emit('room:state', getCleanRoomState(code));
         io.to(code).emit('game:message', `${player.username} has disconnected.`);
