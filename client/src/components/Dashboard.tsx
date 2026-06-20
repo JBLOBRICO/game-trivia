@@ -1,5 +1,5 @@
 
-import { Trophy, User, Play, BookOpen, LogOut, Plus } from 'lucide-react';
+import { Trophy, User, Play, BookOpen, LogOut, Plus, HelpCircle } from 'lucide-react';
 
 export function Dashboard({ gameState }: { gameState: any }) {
   const {
@@ -12,7 +12,8 @@ export function Dashboard({ gameState }: { gameState: any }) {
     dashboardError,
     matchHistory,
     leaderboard,
-    profileViewUser, setProfileViewUser
+    profileViewUser, setProfileViewUser,
+    mechanicsViewOpen, setMechanicsViewOpen
   } = gameState;
 
   return (
@@ -38,6 +39,12 @@ export function Dashboard({ gameState }: { gameState: any }) {
         
         <div className="flex gap-3">
           <button 
+            onClick={() => setMechanicsViewOpen(true)}
+            className="btn btn-outline py-2 px-4 border-gold text-gold hover:bg-gold-05"
+          >
+            <HelpCircle size={18} /> Mechanics Guide
+          </button>
+          <button 
             onClick={() => fetchUserProfile(user.username)}
             className="btn btn-outline py-2 px-4"
           >
@@ -58,7 +65,16 @@ export function Dashboard({ gameState }: { gameState: any }) {
               <Play size={20} className="text-cyan" /> Select Game Mode
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button 
+                onClick={() => setGameModeSelect('Training')}
+                className={`glass-card p-4 text-left flex flex-col gap-2 ${gameModeSelect === 'Training' ? 'border-cyan bg-cyan-05' : ''}`}
+              >
+                <span className="text-xs uppercase font-extrabold text-green">Training (Solo)</span>
+                <h4 className="text-base font-bold text-white">Practice Mode</h4>
+                <p className="text-xs text-text-muted">Play alone to learn the mechanics without tracking stats.</p>
+              </button>
+
               <button 
                 onClick={() => setGameModeSelect('1v1')}
                 className={`glass-card p-4 text-left flex flex-col gap-2 ${gameModeSelect === '1v1' ? 'border-cyan bg-cyan-05' : ''}`}
@@ -231,6 +247,56 @@ export function Dashboard({ gameState }: { gameState: any }) {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mechanics Guide Modal */}
+      {mechanicsViewOpen && (
+        <div className="victory-overlay flex items-center justify-center p-4 z-50">
+          <div className="glass-panel w-full max-w-2xl p-6 flex flex-col gap-4 relative max-h-[80vh] overflow-y-auto">
+            <button 
+              onClick={() => setMechanicsViewOpen(false)}
+              className="absolute top-4 right-4 text-text-muted hover:text-white text-lg font-extrabold"
+            >
+              ✕
+            </button>
+            <h2 className="text-2xl font-bold text-gold flex items-center gap-2 mb-4">
+              <HelpCircle /> Game Mechanics & Rules
+            </h2>
+            
+            <div className="space-y-6 text-sm text-white-80">
+              <section>
+                <h3 className="text-lg font-bold text-white mb-2 border-b border-white-05 pb-1">Board Tiles</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li><b>Normal (Gray)</b>: A standard trivia question.</li>
+                  <li><b>Wildcard (Purple)</b>: Choose your preferred category for the question!</li>
+                  <li><b>Trap (Red)</b>: If you land here and fail the question, you lose 5 coins or get pushed back.</li>
+                  <li><b>Minigame (Gold)</b>: Triggers a special mini-event for bonus coins (coming soon).</li>
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-bold text-white mb-2 border-b border-white-05 pb-1">Characters & Abilities</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li><b>Warrior</b>: "Shield Wall" - Grants immunity to Traps for 1 turn.</li>
+                  <li><b>Mage</b>: "Arcane Knowledge" - Reveals the correct category of a hidden tile.</li>
+                  <li><b>Rogue</b>: "Swift Step" - Move +1 extra space if you answer correctly.</li>
+                  <li><b>Scholar</b>: "Deep Study" - Earn 2x coins on your next correct answer.</li>
+                  <li><b>Chronomancer</b>: "Time Distortion" - Reroll the current trivia question once.</li>
+                  <li><b>Cleric</b>: "Divine Intervention" - Saves you from losing your streak on a wrong answer.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-bold text-white mb-2 border-b border-white-05 pb-1">Power-ups (Shop)</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li><b>Shield (10 coins)</b>: Protects against the next trap.</li>
+                  <li><b>Double Move (15 coins)</b>: Moves twice the distance on your next correct answer.</li>
+                  <li><b>Trap Protect (5 coins)</b>: Defuses the trap you are currently standing on.</li>
+                </ul>
+              </section>
             </div>
           </div>
         </div>

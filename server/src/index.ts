@@ -6,11 +6,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 import { getDatabase } from '../db/database';
-import authRouter from './routes/auth';
-import roomsRouter from './routes/rooms';
-import triviaRouter from './routes/trivia';
-import usersRouter from './routes/users';
-import gamesRouter from './routes/games';
+import { authRouter } from '../routes/auth';
+import { statsRouter } from '../routes/stats';
 import { registerSocketHandlers } from '../socket/gameHandler';
 
 dotenv.config();
@@ -33,10 +30,7 @@ getDatabase().then(() => console.log('✅ Database initialized')).catch(console.
 
 // API routes
 app.use('/api/auth', authRouter);
-app.use('/api/rooms', roomsRouter);
-app.use('/api/trivia', triviaRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/games', gamesRouter);
+app.use('/api/stats', statsRouter);
 
 // Health check
 app.get('/api/health', (req: Request, res: Response) => {

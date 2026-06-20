@@ -1,47 +1,47 @@
-import express from 'express';
-import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import { initDB } from './models/db.js';
-import authRouter from './routes/auth.js';
-import roomsRouter from './routes/rooms.js';
-import triviaRouter from './routes/trivia.js';
-import usersRouter from './routes/users.js';
-import gamesRouter from './routes/games.js';
-dotenv.config();
-const app = express();
-const server = http.createServer(app);
-const io = new SocketIOServer(server, {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
+const cors_1 = __importDefault(require("cors"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
+const database_1 = require("../db/database");
+const auth_1 = require("../routes/auth");
+const stats_1 = require("../routes/stats");
+const gameHandler_1 = require("../socket/gameHandler");
+dotenv_1.default.config();
+const app = (0, express_1.default)();
+const server = http_1.default.createServer(app);
+const io = new socket_io_1.Server(server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
     }
 });
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
 // Initialize DB (creates tables if missing)
-initDB();
+(0, database_1.getDatabase)().then(() => console.log('✅ Database initialized')).catch(console.error);
 // API routes
-app.use('/api/auth', authRouter);
-app.use('/api/rooms', roomsRouter);
-app.use('/api/trivia', triviaRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/games', gamesRouter);
+app.use('/api/auth', auth_1.authRouter);
+app.use('/api/stats', stats_1.statsRouter);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 // Serve static frontend build if exists
-const staticPath = path.resolve(__dirname, '../../client/dist');
-app.use(express.static(staticPath));
+const staticPath = path_1.default.resolve(__dirname, '../../client/dist');
+app.use(express_1.default.static(staticPath));
 app.get('*', (req, res) => {
-    res.sendFile(path.join(staticPath, 'index.html'));
+    res.sendFile(path_1.default.join(staticPath, 'index.html'));
 });
 // Socket.IO setup
-setupGameSocket(io);
+(0, gameHandler_1.registerSocketHandlers)(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`🚀 Server listening on http://localhost:${PORT}`);

@@ -42,13 +42,21 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--bg-gradient-top) 0%, var(--bg-gradient-bottom) 100%);
+  background: linear-gradient(-45deg, #e0f2fe, #bae6fd, #fdf4ff, #e0e7ff);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
   color: var(--color-text);
   font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.5;
   background-attachment: fixed;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 h1, h2, h3, h4, h5, h6 {

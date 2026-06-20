@@ -29,7 +29,7 @@ interface Tile {
 
 interface GameRoom {
   roomCode: string;
-  gameMode: '1v1' | '2v2' | 'FFA';
+  gameMode: '1v1' | '2v2' | 'FFA' | 'Training';
   status: 'lobby' | 'playing' | 'gameover';
   players: Player[];
   turnIndex: number;
@@ -216,7 +216,7 @@ export function registerSocketHandlers(io: Server) {
         return socket.emit('room:error', 'All players must be ready.');
       }
 
-      const minPlayers = room.gameMode === '1v1' ? 2 : (room.gameMode === '2v2' ? 4 : 2);
+      const minPlayers = room.gameMode === 'Training' ? 1 : (room.gameMode === '1v1' ? 2 : (room.gameMode === '2v2' ? 4 : 2));
       if (room.players.length < minPlayers) {
         return socket.emit('room:error', `Need at least ${minPlayers} players for ${room.gameMode}.`);
       }
@@ -749,16 +749,19 @@ async function saveMatchResults(room: GameRoom) {
   try {
     const db = await getDatabase();
     
-    // Save to match history
-    await db.run(
-      'INSERT INTO match_history (game_mode, winner_username, players) VALUES (?, ?, ?)',
-      [matchHistoryData.game_mode, matchHistoryData.winner_username, matchHistoryData.players]
-    );
+    // Save to match history (skip for Training mode)
+    if (room.gameMode !== 'Training') {
+      await db.run(
+        'INSERT INTO match_history (game_mode, winner_username, players) VALUES (?, ?, ?)',
+        [matchHistoryData.game_mode, matchHistoryData.winner_username, matchHistoryData.players]
+      );
+    }
 
-    // Save statistics for logged-in players
-    for (const p of room.players) {
-      if (p.userId) {
-        const isWinner = p.username === winner.username;
+    // Save statistics for logged-in players (skip for Training mode)
+    if (room.gameMode !== 'Training') {
+      for (const p of room.players) {
+        if (p.userId) {
+          const isWinner = p.username === winner.username;
         // Simple XP formula: 100 XP base, +50 XP for winning, +10 XP per space moved, +5 XP per coin left
         const xpEarned = 100 + (isWinner ? 50 : 0) + (p.position * 10) + (p.coins * 2);
         
@@ -776,6 +779,7 @@ async function saveMatchResults(room: GameRoom) {
           xpEarned
         );
       }
+    }
     }
   } catch (err) {
     console.error('Error saving match results to DB:', err);

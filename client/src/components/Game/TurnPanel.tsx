@@ -222,14 +222,12 @@ export function TurnPanel({ gameState }: { gameState: any }) {
             )}
           </div>
 
-          {isMyTurn && (
-            <button 
-              onClick={() => setTurnResult(null)}
-              className="btn btn-cyan px-8 py-3 max-w-xs mx-auto text-base"
-            >
-              Next Turn <ArrowRight size={18} />
-            </button>
-          )}
+          <button 
+            onClick={() => setTurnResult(null)}
+            className="btn btn-cyan px-8 py-3 max-w-xs mx-auto text-base"
+          >
+            Continue <ArrowRight size={18} />
+          </button>
         </div>
       )}
     </div>

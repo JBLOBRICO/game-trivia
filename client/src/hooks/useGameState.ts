@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { playCorrect, playIncorrect, playCoin, playMove, playTick, playVictory } from '../utils/sound';
 
-export const API_BASE = window.location.origin.includes('5173') || window.location.origin.includes('3000')
-  ? 'http://localhost:5000'
+const hostname = window.location.hostname;
+export const API_BASE = window.location.port === '5173' || window.location.port === '3000'
+  ? `http://${hostname}:5000`
   : window.location.origin;
 
 export const AVATARS = ['🐱', '🐶', '🦊', '🦁', '🐸', '🐨', '🐼', '🦄', '🐉', '🦉'];
@@ -54,10 +55,11 @@ export function useGameState() {
 
   // Dashboard / Lobby Code
   const [roomCodeInput, setRoomCodeInput] = useState('');
-  const [gameModeSelect, setGameModeSelect] = useState<'1v1' | '2v2' | 'FFA'>('FFA');
+  const [gameModeSelect, setGameModeSelect] = useState<'1v1' | '2v2' | 'FFA' | 'Training'>('FFA');
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [matchHistory, setMatchHistory] = useState<any[]>([]);
   const [profileViewUser, setProfileViewUser] = useState<any>(null);
+  const [mechanicsViewOpen, setMechanicsViewOpen] = useState(false);
   const [dashboardError, setDashboardError] = useState('');
 
   // Socket & Lobby/Game State
@@ -226,6 +228,9 @@ export function useGameState() {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       
       setRoomState(cleanRoomState);
+      setActiveQuestion(null);
+      setSubmittedAnswer(null);
+      setEliminatedChoices([]);
       setTurnResult({
         playerUsername,
         isCorrect,
@@ -420,6 +425,7 @@ export function useGameState() {
     leaderboard, setLeaderboard,
     matchHistory, setMatchHistory,
     profileViewUser, setProfileViewUser,
+    mechanicsViewOpen, setMechanicsViewOpen,
     dashboardError, setDashboardError,
     socket, setSocket,
     roomState, setRoomState,
