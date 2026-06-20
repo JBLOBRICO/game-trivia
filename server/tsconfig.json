@@ -4,7 +4,6 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "ignoreDeprecations": "5.0",
     "outDir": "dist",
     "strict": true,
     "skipLibCheck": true,
